@@ -10,8 +10,8 @@
 | 
 */
 
-use App\Controllers\DataController;
+use App\Controllers\WelcomeController;
 
-$route->get('/halo', [DataController::class, 'index']);
+$route->get('/', [WelcomeController::class, 'index']);
 
 ?>

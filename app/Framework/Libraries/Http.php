@@ -29,3 +29,33 @@ function getRequestUri()
 
     return $uri;
 }
+
+function request($param = '')
+{
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    switch ($method) {
+        case 'GET':
+            return $param ? (isset($_GET[$param]) ? $_GET[$param] : '') : $_GET;
+            break;
+        case 'POST':
+            return $param ? (isset($_POST[$param]) ? $_POST[$param] : '') : $_POST;
+            break;
+        case 'PUT':
+            parse_str(file_get_contents('php://input'), $_PUT);
+            return $param ? (isset($_PUT[$param]) ? $_PUT[$param] : '') : $_PUT;
+            break;
+        case 'PATCH':
+            parse_str(file_get_contents('php://input'), $_PATCH);
+            return $param ? (isset($_PATCH[$param]) ? $_PATCH[$param] : '') : $_PATCH;
+            break;
+        case 'DELETE':
+            parse_str(file_get_contents('php://input'), $_DELETE);
+            return $param ? (isset($_DELETE[$param]) ? $_DELETE[$param] : '') : $_DELETE;
+            break;
+        default:
+            return [];
+            break;
+    }
+}
+

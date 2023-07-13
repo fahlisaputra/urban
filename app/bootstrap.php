@@ -16,7 +16,9 @@ require_once base() . '/app/Framework/Libraries/Http.php';
 require_once base() . '/app/Framework/Routing/RouteMethod.php';
 require_once base() . '/app/Framework/Routing/Route.php';
 require_once base() . '/app/Framework/App.php';
+require_once base() . '/app/Framework/Libraries/Config.php';
 
+use App\Framework\Libraries\DB;
 use App\Framework\Routing\Route;
 
 $route = new Route();
@@ -24,4 +26,11 @@ $route = new Route();
 // load all files in routes folder
 foreach (glob(base() . '/routes/*.php') as $file) {
     require_once $file;
+}
+
+$db = new DB();
+function db()
+{
+    global $db;
+    return $db;
 }

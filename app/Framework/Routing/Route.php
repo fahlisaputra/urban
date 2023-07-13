@@ -12,6 +12,17 @@ class Route {
 
     public $routes = [];
 
+    public function __construct()
+    {
+        $this->routes = [
+            RouteMethod::GET => [],
+            RouteMethod::POST => [],
+            RouteMethod::PUT => [],
+            RouteMethod::PATCH => [],
+            RouteMethod::DELETE => [],
+        ];
+    }
+
     private function addRoute($httpMethod, $route, $handler)
     {
         $this->routes[$httpMethod][$route] = $handler;
