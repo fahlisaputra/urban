@@ -17,14 +17,18 @@ class App {
         if (array_key_exists($uri, $routes[$method])) {
             // check if the route is callable closure
 
-            if (is_callable($routes[$method][$uri])) {
+            if (is_array($routes[$method][$uri])) {
+                $route = $routes[$method][$uri];
+                $controller = new $route[0];
+                $controller->{$route[1]}();
+            } elseif (is_callable($routes[$method][$uri])) {
                 $routes[$method][$uri]();
             } else {
                 // if the route is a controller
-                $controller = explode('@', $routes[$method][$uri]);
-                $controllerName = 'App\\Controllers\\' . $controller[0];
+                $route = explode('@', $routes[$method][$uri]);
+                $controllerName = 'App\\Controllers\\' . $route[0];
                 $controller = new $controllerName();
-                $controller->{$controller[1]}();
+                $controller->{$route[1]}();
             }
 
         } else {

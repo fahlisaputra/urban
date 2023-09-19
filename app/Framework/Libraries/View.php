@@ -62,7 +62,7 @@ class View {
 
             if (file_exists($file)) {
                 extract($data);
-                echo $render;
+                include_once $file;
             } else {
                 echo "View not found";
             }

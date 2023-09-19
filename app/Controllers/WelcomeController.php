@@ -9,7 +9,14 @@ class WelcomeController {
         public function index()
         {
             View::render('welcome', [
-                'text' => 'Hello World'
+                'text' => 'Urban Framework from Index'
+            ]);
+        }
+
+        public function index2()
+        {
+            View::render('welcome', [
+                'text' => 'Urban Framework from Index2'
             ]);
         }
 }

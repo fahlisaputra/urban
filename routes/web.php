@@ -11,7 +11,12 @@
 */
 
 use App\Controllers\WelcomeController;
+use App\Framework\Libraries\View;
 
-$route->get('/', [WelcomeController::class, 'index']);
-
-?>
+$route->get('/2', 'WelcomeController@index2');
+$route->get('/1', [WelcomeController::class, 'index']);
+$route->get('/', function() {
+    return View::render('welcome', [
+        'text' => 'Fahli',
+    ]);
+});
