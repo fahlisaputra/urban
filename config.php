@@ -6,7 +6,7 @@ $config = [
         'port' => '3306',
         'username' => 'root',
         'password' => '',
-        'database' => 'badminton',
+        'database' => 'tukangspace',
     ]
 ];
 

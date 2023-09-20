@@ -8,6 +8,7 @@
 
 namespace App\Framework;
 
+use App\Framework\Bootstrap\HandleExceptions;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Console\Commands\ServeCommand;
 use App\Framework\Libraries\Request;
@@ -33,10 +34,6 @@ class Application {
     }
     
     public function init() {
-        try {
-            echo json_encode(Route::getRoutes(), JSON_PRETTY_PRINT);
-        } catch (\Throwable $th) {
-            throw new FrameworkException($th->getMessage(), $th->getCode(), $th);
-        }
+        echo json_encode(Route::predictRoute());
     }
 }

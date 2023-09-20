@@ -18,7 +18,11 @@ require_once base() . '/app/Framework/Routing/Route.php';
 require_once base() . '/app/Framework/Application.php';
 require_once base() . '/app/Framework/Libraries/Config.php';
 
+use App\Framework\Bootstrap\HandleExceptions;
 use App\Framework\Libraries\DB;
+
+// $handler = new HandleExceptions();
+// $handler->bootstrap();
 
 $_routes = array();
 

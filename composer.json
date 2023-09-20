@@ -17,6 +17,7 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "symfony/console": "6.4.x-dev"
+        "symfony/console": "6.4.x-dev",
+        "symfony/error-handler": "6.4.x-dev"
     }
 }

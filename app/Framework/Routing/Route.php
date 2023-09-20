@@ -31,24 +31,42 @@ class Route {
         return $instance;
     }
 
+    private static function split($uri) {
+        $uri = trim($uri, '/');
+        $paths = explode('/', $uri);
+        $result = array();
+        foreach($paths as $path) {
+            if (!(trim($path) == '' || trim($path) == '\\')) {
+                $result[] = $path;
+            }
+        }
+        return $result;
+    }
+
+    private static function splitPath($uri, callable $callback) {
+        $paths = static::split($uri);
+        foreach ($paths as $path) {
+            $callback($path, $paths);
+        }
+    }
+    private static function countSplitPath($uri) {
+        $paths = static::split($uri);
+        return count($paths);
+    }
+
     private function addRoute($httpMethod, $route, $handler)
     {
+        $instance = $this->setInstance($httpMethod, $route, $handler);
         global $_routes;
 
-        $params = trim($route, '/');
-        $params = explode('/', $params);
+        static::splitPath($route, function($path, $paths) use ($instance) {
+            $routePath = new RoutePath();
+            $routePath->index = array_search($path, $paths);
+            $routePath->name = $path;
+            $routePath->static = true;
+            $routePath->optional = false;
 
-        $instance = $this->setInstance($httpMethod, $route, $handler);
-
-        foreach ($params as $param) {
-            $path = new RoutePath();
-            $path->name = $param;
-            $path->static = true;
-            $path->optional = false;
-            $path->index = array_search($param, $params);
-
-            if (preg_match('/\{(.*)\}/', $param, $matches)) {
-
+            if (preg_match('/\{(.*)\}/', $path, $matches)) {
                 // check if parameter is exist
                 if (in_array($matches[1], array_column($instance->params, 'name'))) {
                     throw new FrameworkException("Parameter {$matches[1]} already exist");
@@ -57,19 +75,20 @@ class Route {
                 $data = new RouteParam();
                 $data->name = $matches[1];
                 $data->optional = false;
-                $data->position = array_search($param, $params);
+                $data->position = array_search($path, $paths);
 
-                $path->static = false;
+                $routePath->static = false;
                 // Check if the parameter is optional
-                if (preg_match('/\{(.*)\?\}/', $param, $matches)) {
+                if (preg_match('/\{(.*)\?\}/', $path, $matches)) {
                     $data->optional = true;
-                    $path->optional = true;
+                    $routePath->optional = true;
                 }
                 $instance->params[] = $data;
             }
 
-            $instance->details[] = $path;
-        }
+            $instance->details[] = $routePath;
+        });
+
         $_routes[] = $instance;
         return $this;
     }
@@ -178,7 +197,40 @@ class Route {
         return null;
     }
 
-    public static function determineCurrentRouteByURI($uri) {
+    public static function predictRoute() {
+        $uri = getRequestUri();
+        global $_routes;
+        $count = static::countSplitPath($uri);
 
+        foreach ($_routes as $route) {
+            $route = json_encode($route);
+            $route = json_decode($route, true);
+            if (count($route['details']) == $count) {
+                if (static::checkRoute($uri, $route)) {
+                    return $route;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static function checkRoute($uri, $route) {
+        $count = static::countSplitPath($uri);
+        $index = -1;
+        $valid = true;
+        if ($count > 0) {
+            foreach(static::split($uri) as $path) {
+                $index++;
+                $_route = $route['details'][$index];
+                if($_route['static'] == true) {
+                    if ($path != $_route['name']) {
+                        $valid = false;
+                    }
+                }
+            }
+        }
+
+        return $valid;
     }
 }

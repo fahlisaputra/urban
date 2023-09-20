@@ -14,4 +14,27 @@ class RoutePath
     public string $name;
     public bool $static;
     public bool $optional;
+
+    public function __construct()
+    {
+        $this->index = 0;
+        $this->name = '';
+        $this->static = false;
+        $this->optional = false;
+    }
+
+    public function __set($name, $value)
+    {
+        if (property_exists($this, $name)) {
+            if ($name == 'index') {
+                $this->index = $value;
+            } else if ($name == 'name') {
+                $this->name = $value;
+            } else if ($name == 'static') {
+                $this->static = $value;
+            } else if ($name == 'optional') {
+                $this->optional = $value;
+            }
+        }
+    }
 }

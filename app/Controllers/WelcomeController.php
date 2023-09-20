@@ -8,8 +8,9 @@ class WelcomeController {
     
         public function index()
         {
+            $tes = "Hello World";
             View::render('welcome', [
-                'text' => 'Urban Framework from Index'
+                'text' => $tes
             ]);
         }
 

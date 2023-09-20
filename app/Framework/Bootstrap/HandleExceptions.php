@@ -2,20 +2,28 @@
 
 namespace App\Framework\Bootstrap;
 
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\Handler;
 use ErrorException;
 use Exception;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\ErrorHandler\Error\FatalError;
 use Throwable;
 
 class HandleExceptions
 {
     public static $reservedMemory;
-    protected static $app;
 
-    public function bootstrap($app)
+    protected $exceptionHandler;
+
+    public function __construct()
+    {
+        $this->exceptionHandler = new Handler();
+    }
+
+    public function bootstrap()
     {
         self::$reservedMemory = str_repeat('x', 32768);
-        static::$app = $app;
         error_reporting(-1);
         set_error_handler($this->forwardsTo('handleError'));
         set_exception_handler($this->forwardsTo('handleException'));
@@ -28,9 +36,9 @@ class HandleExceptions
     public function handleError($level, $message, $file = '', $line = 0)
     {
         if ($this->isDeprecation($level)) {
-            //$this->handleDeprecationError($message, $file, $line, $level);
+            $this->handleDeprecationError($message, $file, $line, $level);
         } elseif (error_reporting() & $level) {
-            throw new ErrorException($message, 0, $level, $file, $line);
+            $this->getExceptionHandler()->report(new ErrorException($message, 0, $level, $file, $line));
         }
     }
 
@@ -45,19 +53,19 @@ class HandleExceptions
      */
     public function handleDeprecationError($message, $file, $line, $level = E_DEPRECATED)
     {
-        if ($this->shouldIgnoreDeprecationErrors()) {
-            return;
-        }
+        // if ($this->shouldIgnoreDeprecationErrors()) {
+        //     return;
+        // }
 
-        try {
-            $logger = static::$app->make(LogManager::class);
-        } catch (Exception) {
-            return;
-        }
+        // try {
+        //     $logger = static::$app->make(LogManager::class);
+        // } catch (Exception) {
+        //     return;
+        // }
 
-        $this->ensureDeprecationLoggerIsConfigured();
+        // $this->ensureDeprecationLoggerIsConfigured();
 
-        $options = static::$app['config']->get('logging.deprecations') ?? [];
+        // $options = static::$app['config']->get('logging.deprecations') ?? [];
 
         // with($logger->channel('deprecations'), function ($log) use ($message, $file, $line, $level, $options) {
         //     if ($options['trace'] ?? false) {
@@ -80,9 +88,9 @@ class HandleExceptions
      */
     protected function shouldIgnoreDeprecationErrors()
     {
-        return !class_exists(LogManager::class)
-            || !static::$app->hasBeenBootstrapped()
-            || static::$app->runningUnitTests();
+        // return !class_exists(LogManager::class)
+        //     || !static::$app->hasBeenBootstrapped()
+        //     || static::$app->runningUnitTests();
     }
 
     /**
@@ -141,22 +149,7 @@ class HandleExceptions
     public function handleException(Throwable $e)
     {
         self::$reservedMemory = null;
-
-        try {
-            $this->getExceptionHandler()->report($e);
-        } catch (Exception) {
-            $exceptionHandlerFailed = true;
-        }
-
-        if (static::$app->runningInConsole()) {
-            $this->renderForConsole($e);
-
-            if ($exceptionHandlerFailed ?? false) {
-                exit(1);
-            }
-        } else {
-            $this->renderHttpResponse($e);
-        }
+        throw new FrameworkException($e->getMessage(), $e->getCode(), $e->getPrevious());
     }
 
     /**
@@ -170,16 +163,6 @@ class HandleExceptions
         $this->getExceptionHandler()->renderForConsole(new ConsoleOutput(), $e);
     }
 
-    /**
-     * Render an exception as an HTTP response and send it.
-     *
-     * @param  \Throwable  $e
-     * @return void
-     */
-    protected function renderHttpResponse(Throwable $e)
-    {
-        $this->getExceptionHandler()->render(static::$app['request'], $e)->send();
-    }
 
     /**
      * Handle the PHP shutdown event.
@@ -204,7 +187,7 @@ class HandleExceptions
      */
     protected function fatalErrorFromPhpError(array $error, $traceOffset = null)
     {
-        //return new FatalError($error['message'], 0, $error, $traceOffset);
+        return new FatalError($error['message'], 0, $error, $traceOffset);
     }
 
     /**
@@ -214,9 +197,7 @@ class HandleExceptions
      */
     protected function forwardsTo($method)
     {
-        return fn (...$arguments) => static::$app
-            ? $this->{$method}(...$arguments)
-            : false;
+        return fn (...$arguments) => $this->{$method}(...$arguments);
     }
 
     /**
@@ -248,16 +229,6 @@ class HandleExceptions
      */
     protected function getExceptionHandler()
     {
-        return static::$app->make(ExceptionHandler::class);
-    }
-
-    /**
-     * Clear the local application instance from memory.
-     *
-     * @return void
-     */
-    public static function forgetApp()
-    {
-        static::$app = null;
+        return $this->exceptionHandler;
     }
 }
