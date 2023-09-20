@@ -8,54 +8,165 @@
 
 namespace App\Framework\Routing;
 
+use App\Framework\Exceptions\FrameworkException;
+
 class Route {
+    private $method;
+    private $route;
+    private $handler;
+    private $params = [];
+    private $name;
+    private $middlewares = [];
+    
+    private function setInstance($httpMethod, $route, $handler) {
+        $instance = new RouteInstance();
+        $instance->method = $httpMethod;
+        $instance->route = $route;
+        $instance->handler = $handler;
 
-    public $routes = [];
+        $this->method = $httpMethod;
+        $this->route = $route;
+        $this->handler = $handler;
 
-    public function __construct()
-    {
-        $this->routes = [
-            RouteMethod::GET => [],
-            RouteMethod::POST => [],
-            RouteMethod::PUT => [],
-            RouteMethod::PATCH => [],
-            RouteMethod::DELETE => [],
-        ];
+        return $instance;
     }
 
     private function addRoute($httpMethod, $route, $handler)
     {
-        $this->routes[$httpMethod][$route] = $handler;
+        global $_routes;
+
+        $params = trim($route, '/');
+        $params = explode('/', $params);
+
+        $instance = $this->setInstance($httpMethod, $route, $handler);
+
+        if (count($params) > 0) {
+            foreach ($params as $param) {
+                if (preg_match('/\{(.*)\}/', $param, $matches)) {
+
+                    // check if parameter is exist
+                    if (in_array($matches[1], array_column($instance->params, 'name'))) {
+                        throw new FrameworkException("Parameter {$matches[1]} already exist");
+                    }
+
+                    $data = new RouteParam();
+                    $data->name = $matches[1];
+                    $data->optional = false;
+                    $data->position = array_search($param, $params);
+                    // Check if the parameter is optional
+                    if (preg_match('/\{(.*)\?\}/', $param, $matches)) {
+                        $data->optional = true;
+                    }
+                    $instance->params[] = $data;
+                }
+            }
+        }
+        $_routes[] = $instance;
         return $this;
     }
 
-    public function get($route, $handler)
+    public function name($name)
     {
-        return $this->addRoute(RouteMethod::GET, $route, $handler);
+        // check if name already exist
+        global $_routes;
+        foreach ($_routes as $route) {
+            if ($route->name == $name) {
+                throw new FrameworkException("Route name {$name} already exist");
+            }
+        }
+
+        if (empty($this->route)) {
+            throw new FrameworkException("Route does not exist");
+        }
+        $this->name = $name;
+
+        // change name on global routes
+        foreach ($_routes as $key => $route) {
+            if ($route->route == $this->route) {
+                $_routes[$key]->name = $name;
+            }
+        }
+        
+        return $this;
+    }
+
+    public static function get($route, $handler)
+    {
+        $instance = new Route();
+        return $instance->addRoute(RouteMethod::GET, $route, $handler);
     }
 
     public function post($route, $handler)
     {
-        return $this->addRoute(RouteMethod::POST, $route, $handler);
+        return static::addRoute(RouteMethod::POST, $route, $handler);
     }
 
     public function put($route, $handler)
     {
-        return $this->addRoute(RouteMethod::PUT, $route, $handler);
+        return static::addRoute(RouteMethod::PUT, $route, $handler);
     }
 
     public function patch($route, $handler)
     {
-        return $this->addRoute(RouteMethod::PATCH, $route, $handler);
+        return static::addRoute(RouteMethod::PATCH, $route, $handler);
     }
 
     public function delete($route, $handler)
     {
-        return $this->addRoute(RouteMethod::DELETE, $route, $handler);
+        return static::addRoute(RouteMethod::DELETE, $route, $handler);
     }
 
-    public function getRoutes()
+    public function middleware($middleware)
     {
-        return $this->routes;
+        $this->middlewares[] = $middleware;
+        return $this;
     }
+
+    public function getMiddlewares()
+    {
+        return $this->middlewares;
+    }
+
+    public function getParams()
+    {
+        return $this->params;
+    }
+
+    public function getRoute()
+    {
+        return $this->route;
+    }
+
+    public function getMethod()
+    {
+        return $this->method;
+    }
+
+    public function getHandler()
+    {
+        return $this->handler;
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public static function getRoutes()
+    {
+        global $_routes;
+        return $_routes;
+    }
+
+    public static function getRouteByName($name)
+    {
+        global $_routes;
+        foreach ($_routes as $route) {
+            if ($route->name == $name) {
+                return $route;
+            }
+        }
+        return null;
+    }
+
 }

@@ -8,20 +8,19 @@
 
 function base()
 {
-    return __DIR__ . '/..';
+    return __DIR__ . '/../..';
 }
 
 require_once base() . '/config.php';
 require_once base() . '/app/Framework/Libraries/Http.php';
 require_once base() . '/app/Framework/Routing/RouteMethod.php';
 require_once base() . '/app/Framework/Routing/Route.php';
-require_once base() . '/app/Framework/App.php';
+require_once base() . '/app/Framework/Application.php';
 require_once base() . '/app/Framework/Libraries/Config.php';
 
 use App\Framework\Libraries\DB;
-use App\Framework\Routing\Route;
 
-$route = new Route();
+$_routes = array();
 
 // load all files in routes folder
 foreach (glob(base() . '/routes/*.php') as $file) {

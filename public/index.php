@@ -19,7 +19,7 @@ define('URBAN_START', microtime(true));
 |
 */
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -27,10 +27,15 @@ require __DIR__ . '/../vendor/autoload.php';
 |--------------------------------------------------------------------------
 */
 
-require_once __DIR__ . '/../app/bootstrap.php';
+require_once __DIR__ . '/../app/Framework/Boot.php';
 
-use App\Framework\App;
+/*
+|--------------------------------------------------------------------------
+| Run The Application
+|--------------------------------------------------------------------------
+*/
 
-$app = new App();
-$app->init($route->getRoutes());
-?>
+use App\Framework\Application;
+
+$app = new Application();
+$app->init();

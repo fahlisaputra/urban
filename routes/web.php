@@ -12,11 +12,16 @@
 
 use App\Controllers\WelcomeController;
 use App\Framework\Libraries\View;
+use App\Framework\Routing\Route;
 
-$route->get('/2', 'WelcomeController@index2');
-$route->get('/1', [WelcomeController::class, 'index']);
-$route->get('/', function() {
+Route::get('/2', 'WelcomeController@index2');
+Route::get('/1', [WelcomeController::class, 'index']);
+Route::get('/', function() {
     return View::render('welcome', [
         'text' => 'Fahli',
     ]);
 });
+
+Route::get('/info/{1?}/{2}', function ($a, $b) {
+    echo $a . ' ' . $b;
+})->name('info');
