@@ -40,26 +40,35 @@ class Route {
 
         $instance = $this->setInstance($httpMethod, $route, $handler);
 
-        if (count($params) > 0) {
-            foreach ($params as $param) {
-                if (preg_match('/\{(.*)\}/', $param, $matches)) {
+        foreach ($params as $param) {
+            $path = new RoutePath();
+            $path->name = $param;
+            $path->static = true;
+            $path->optional = false;
+            $path->index = array_search($param, $params);
 
-                    // check if parameter is exist
-                    if (in_array($matches[1], array_column($instance->params, 'name'))) {
-                        throw new FrameworkException("Parameter {$matches[1]} already exist");
-                    }
+            if (preg_match('/\{(.*)\}/', $param, $matches)) {
 
-                    $data = new RouteParam();
-                    $data->name = $matches[1];
-                    $data->optional = false;
-                    $data->position = array_search($param, $params);
-                    // Check if the parameter is optional
-                    if (preg_match('/\{(.*)\?\}/', $param, $matches)) {
-                        $data->optional = true;
-                    }
-                    $instance->params[] = $data;
+                // check if parameter is exist
+                if (in_array($matches[1], array_column($instance->params, 'name'))) {
+                    throw new FrameworkException("Parameter {$matches[1]} already exist");
                 }
+
+                $data = new RouteParam();
+                $data->name = $matches[1];
+                $data->optional = false;
+                $data->position = array_search($param, $params);
+
+                $path->static = false;
+                // Check if the parameter is optional
+                if (preg_match('/\{(.*)\?\}/', $param, $matches)) {
+                    $data->optional = true;
+                    $path->optional = true;
+                }
+                $instance->params[] = $data;
             }
+
+            $instance->details[] = $path;
         }
         $_routes[] = $instance;
         return $this;
@@ -169,4 +178,7 @@ class Route {
         return null;
     }
 
+    public static function determineCurrentRouteByURI($uri) {
+
+    }
 }

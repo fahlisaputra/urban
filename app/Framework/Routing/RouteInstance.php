@@ -14,6 +14,7 @@ class RouteInstance
     public string $route;
     public $handler;
     public array $params = [];
+    public array $details = [];
     public array $middlewares = [];
     public $name;
 }

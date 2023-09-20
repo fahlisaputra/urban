@@ -11,6 +11,7 @@ namespace App\Framework;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Console\Commands\ServeCommand;
 use App\Framework\Libraries\Request;
+use App\Framework\Routing\Route;
 use Symfony\Component\Console\Application as ConsoleApplication;
 
 class Application {
@@ -33,12 +34,7 @@ class Application {
     
     public function init() {
         try {
-            global $_routes;
-            $uri = $_SERVER['REQUEST_URI'];
-            $method = $_SERVER['REQUEST_METHOD'];
-            $uri = getRequestUri();
-
-            $this->request = new Request($this);
+            echo json_encode(Route::getRoutes(), JSON_PRETTY_PRINT);
         } catch (\Throwable $th) {
             throw new FrameworkException($th->getMessage(), $th->getCode(), $th);
         }
