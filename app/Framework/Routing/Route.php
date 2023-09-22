@@ -9,6 +9,7 @@
 namespace App\Framework\Routing;
 
 use App\Framework\Exceptions\FrameworkException;
+use Exception;
 
 class Route {
     private $method;
@@ -200,15 +201,12 @@ class Route {
     public static function predictRoute() {
         $uri = getRequestUri();
         global $_routes;
-        $count = static::countSplitPath($uri);
 
         foreach ($_routes as $route) {
             $route = json_encode($route);
             $route = json_decode($route, true);
-            if (count($route['details']) == $count) {
-                if (static::checkRoute($uri, $route)) {
-                    return $route;
-                }
+            if (static::checkRoute($uri, $route)) {
+                return $route;
             }
         }
 
@@ -222,10 +220,22 @@ class Route {
         if ($count > 0) {
             foreach(static::split($uri) as $path) {
                 $index++;
+
+                if (!isset($route['details'][$index])) {
+                    $valid = false;
+                    break;
+                }
+
                 $_route = $route['details'][$index];
-                if($_route['static'] == true) {
+                if ($_route['static']) {
                     if ($path != $_route['name']) {
                         $valid = false;
+                    }
+                } else {
+                    if ($_route['optional'] == true) {
+                        if ($path != $_route['name']) {
+                            $valid = false;
+                        }
                     }
                 }
             }
