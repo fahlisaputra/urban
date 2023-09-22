@@ -36,6 +36,10 @@ require_once __DIR__ . '/../app/Framework/Boot.php';
 */
 
 use App\Framework\Application;
+use App\Framework\Libraries\Request;
 
 $app = new Application();
 $app->init();
+
+$request = new Request($app);
+$request->handle();

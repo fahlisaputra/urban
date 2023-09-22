@@ -3,6 +3,7 @@
 namespace App\Framework\Libraries;
 
 use App\Framework\Application;
+use App\Framework\Routing\Route;
 
 class Request
 {
@@ -99,26 +100,50 @@ class Request
     }
     
     public function handle() {
+        $route = $this->app->route;
+        $handler = $route->handler;
+
+        $params = $this->params();
+        if (is_array($handler)) {
+            $controller = new $handler[0];
+            $controller->{$handler[1]}(...$params);
+        } elseif (is_callable($handler)) {
+            call_user_func_array($handler, $params);
+        } else {
+            // if the route is a controller
+            $handler = explode('@', $handler);
+            $controllerName = 'App\\Controllers\\' . $handler[0];
+            $controller = new $controllerName(...$params);
+            $controller->{$handler[1]}();
+        }
+    }
+
+    public function params($key = '') {
         $uri = getRequestUri();
-        $method = $_SERVER['REQUEST_METHOD'];
-        $routes = $this->app->getRoutes();
-        $route = null;
-        foreach ($routes as $r) {
-            if ($r->route == $uri && $r->method == $method) {
-                $route = $r;
-                break;
+        $_uri = Route::split($uri);
+        $route = $this->app->route;
+        $params = $route->params;
+
+        if ($key) {
+            foreach ($params as $param) {
+                if ($param->name == $key) {
+                    $position = $param->position;
+                    if (isset($_uri[$position])) {
+                        return $_uri[$position];
+                    } else {
+                        return null;
+                    }
+                }
             }
         }
-        if ($route) {
-            $handler = $route->handler;
-            $handler = explode('@', $handler);
-            $controller = $handler[0];
-            $method = $handler[1];
-            $controller = "App\\Controllers\\{$controller}";
-            $controller = new $controller();
-            $controller->$method();
-        } else {
-            echo '404';
+
+        $extract = [];
+        foreach ($params as $param) {
+            $position = $param->position;
+            if (isset($uri[$position])) {
+                $extract[] = $_uri[$position];
+            }
         }
+        return $extract;
     }
 }

@@ -31,7 +31,7 @@ class Route {
         return $instance;
     }
 
-    private static function split($uri) {
+    public static function split($uri) {
         $uri = trim($uri, '/');
         $paths = explode('/', $uri);
         $result = array();
@@ -200,15 +200,12 @@ class Route {
     public static function predictRoute() {
         $uri = getRequestUri();
         global $_routes;
-        $count = static::countSplitPath($uri);
 
         foreach ($_routes as $route) {
-            $route = json_encode($route);
-            $route = json_decode($route, true);
-            if (count($route['details']) == $count) {
-                if (static::checkRoute($uri, $route)) {
-                    return $route;
-                }
+            $route_data = json_encode($route);
+            $route_data = json_decode($route_data, true);
+            if (static::checkRoute($uri, $route_data)) {
+                return $route;
             }
         }
 
@@ -217,16 +214,29 @@ class Route {
 
     private static function checkRoute($uri, $route) {
         $count = static::countSplitPath($uri);
+        $_uri = static::split($uri);
         $index = -1;
         $valid = true;
-        if ($count > 0) {
-            foreach(static::split($uri) as $path) {
-                $index++;
-                $_route = $route['details'][$index];
-                if($_route['static'] == true) {
-                    if ($path != $_route['name']) {
+
+        if (count($route['details']) < $count) {
+            return false;
+        }
+
+        foreach($route['details'] as $path) {
+            $index++;
+            if (!$path['static']) {
+                if (!$path['optional']) {
+                    if (!isset($_uri[$index])) {
                         $valid = false;
                     }
+                }
+            } else {
+                if (isset($_uri[$index])) {
+                    if ($path['name'] != $_uri[$index]) {
+                        $valid = false;
+                    }
+                } else {
+                    $valid = false;
                 }
             }
         }

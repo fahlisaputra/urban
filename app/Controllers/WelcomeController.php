@@ -6,9 +6,9 @@ use App\Framework\Libraries\View;
 
 class WelcomeController {
     
-        public function index()
+        public function index($a, $b)
         {
-            $tes = "Hello World";
+            $tes = "Hello World " . $a . " - " . $b;
             View::render('welcome', [
                 'text' => $tes
             ]);
